@@ -1,4 +1,5 @@
 import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,13 +24,21 @@ public class GitService {
 
         // 构建文件在Git仓库的API URL
         String fileApiUrl = gitRepoUrl + "/contents/" + fileName;
+        boolean fileExists;
 
-        // 检查文件是否存在
-        ResponseEntity<String> fileCheckResponse = restTemplate.exchange(
-            fileApiUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class
-        );
-
-        boolean fileExists = fileCheckResponse.getStatusCode() != HttpStatus.NOT_FOUND;
+        try {
+            // 尝试获取文件
+            restTemplate.exchange(fileApiUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            fileExists = true;
+        } catch (HttpClientErrorException e) {
+            // 如果文件不存在，则捕获404错误
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                fileExists = false;
+            } else {
+                // 其他错误应该被正常抛出
+                throw e;
+            }
+        }
 
         // 创建或更新文件的请求体
         String commitMessage = fileExists ? "Update " : "Create ";
