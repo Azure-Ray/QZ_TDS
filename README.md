@@ -1,59 +1,78 @@
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import org.apache.activemq.ActiveMQConnectionFactory;
+<!-- HTML界面 -->
+<div style="font-family: Arial, sans-serif;">
+    <h2>Change Request Details</h2>
+    <table id="data-table" style="width: 100%; border-collapse: collapse;">
+        <!-- 表格头部和数据将通过JavaScript动态插入 -->
+    </table>
+    <button id="save-button" style="margin-top: 20px;">Save Changes</button>
+</div>
 
-public class SimpleJmsSender {
-
-    public static void main(String[] args) {
-        // 连接工厂 - 特定于提供者
-        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
-
-        Connection connection = null;
-        try {
-            // 创建连接
-            connection = factory.createConnection();
-            connection.start();
-
-            // 创建会话
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            // 创建目的地（队列或主题）
-            Destination destination = session.createQueue("testQueue");
-
-            // 创建消息生产者
-            MessageProducer producer = session.createProducer(destination);
-
-            // 创建一条文本消息
-            TextMessage message = session.createTextMessage("Hello JMS!");
-
-            // 发送消息
-            producer.send(message);
-
-            System.out.println("Message sent: " + message.getText());
-        } catch (JMSException e) {
-            e.printStackTrace();
-        } finally {
-            // 关闭连接
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (JMSException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+<script>
+// JavaScript代码
+var userElement = document.getElementById('user');
+var apiUrl = 'http://www.test01.com/api';
+if (userElement && userElement.value) {
+    apiUrl += '?user=' + encodeURIComponent(userElement.value);
 }
-<dependencies>
-    <!-- ActiveMQ -->
-    <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-all</artifactId>
-        <version>5.x.x</version> <!-- 使用适当的版本号 -->
-    </dependency>
-</dependencies>
+
+function fetchDataAndUpdateTable() {
+    fetch(apiUrl, { method: 'GET' })
+        .then(response => response.json())
+        .then(data => displayDataInTable(data))
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+function displayDataInTable(data) {
+    var table = document.getElementById('data-table');
+    table.innerHTML = ''; // 清空表格
+
+    // 创建表头
+    var header = table.createTHead();
+    var headerRow = header.insertRow(0);
+    ['CR#', 'CR Owner', 'Image URL'].forEach((title, index) => {
+        headerRow.insertCell(index).innerHTML = title;
+    });
+
+    // 填充数据
+    data.forEach(item => {
+        var row = table.insertRow(-1);
+        row.insertCell(0).innerHTML = item.crNumber;
+        row.insertCell(1).innerHTML = item.crOwner;
+        var imageUrlCell = row.insertCell(2);
+        imageUrlCell.innerHTML = '<input type="text" value="' + item.imageUrl + '" />';
+    });
+}
+
+document.getElementById('save-button').addEventListener('click', function() {
+    var updatedData = [];
+    var rows = document.getElementById('data-table').rows;
+    for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        updatedData.push({
+            crNumber: row.cells[0].innerText,
+            crOwner: row.cells[1].innerText,
+            imageUrl: row.cells[2].querySelector('input').value
+        });
+    }
+
+    // Call the API to save the updated data
+    fetch('http://www.test01.com/save-api', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+    }).then(response => {
+        if (response.ok) {
+            alert('Changes saved successfully.');
+        } else {
+            alert('Failed to save changes.');
+        }
+    }).catch(error => {
+        console.error('Error saving data:', error);
+    });
+});
+
+// 页面加载时立即调用API
+fetchDataAndUpdateTable();
+</script>
