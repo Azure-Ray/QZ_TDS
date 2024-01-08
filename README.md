@@ -19,7 +19,19 @@ function fetchDataAndUpdateTable() {
     fetch(apiUrl, { method: 'GET' })
         .then(response => response.json())
         .then(data => displayDataInTable(data))
-        .catch(error => console.error('Error fetching data:', error));
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            useMockData(); // 当API调用失败时使用测试数据
+        });
+}
+
+function useMockData() {
+    var mockApiResponse = [
+        { crNumber: '1001', crOwner: 'Dave', imageUrl: 'http://example.com/image1.jpg' },
+        { crNumber: '1002', crOwner: 'Sarah', imageUrl: 'http://example.com/image2.jpg' },
+        { crNumber: '1003', crOwner: 'John', imageUrl: 'http://example.com/image3.jpg' }
+    ];
+    displayDataInTable(mockApiResponse);
 }
 
 function displayDataInTable(data) {
@@ -55,22 +67,8 @@ document.getElementById('save-button').addEventListener('click', function() {
         });
     }
 
-    // Call the API to save the updated data
-    fetch('http://www.test01.com/save-api', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedData)
-    }).then(response => {
-        if (response.ok) {
-            alert('Changes saved successfully.');
-        } else {
-            alert('Failed to save changes.');
-        }
-    }).catch(error => {
-        console.error('Error saving data:', error);
-    });
+    // 这里可以调用保存数据的API
+    console.log('Updated Data:', updatedData);
 });
 
 // 页面加载时立即调用API
