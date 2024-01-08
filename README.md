@@ -14,6 +14,18 @@
         text-align: left;
         padding: 8px;
     }
+    #data-table th {
+        font-weight: bold; /* 加粗表头 */
+    }
+    #data-table td input {
+        border: none;
+        width: 100%;
+        box-sizing: border-box; /* 确保输入框不超过单元格大小 */
+    }
+    #data-table td input:focus {
+        outline: none;
+        border-bottom: 1px solid blue; /* 编辑时显示下划线 */
+    }
 </style>
 
 <script>
