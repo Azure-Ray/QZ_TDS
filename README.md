@@ -16,6 +16,7 @@
     }
     #data-table th {
         font-weight: bold; /* 加粗表头 */
+        background-color: lightgray; /* 表头背景设置为浅灰色 */
     }
     #data-table td input {
         border: none;
@@ -63,9 +64,9 @@ function displayDataInTable(data) {
     var header = table.createTHead();
     var headerRow = header.insertRow(0);
     ['CR#', 'CR Owner', 'Image URL', 'DAST', 'SAST'].forEach((title, index) => {
-        var cell = headerRow.insertCell(index);
-        cell.innerHTML = title;
-        cell.style.border = '1px solid black';
+        var th = document.createElement('th');
+        th.innerHTML = title;
+        headerRow.appendChild(th);
     });
 
     // 填充数据
