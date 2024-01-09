@@ -1,41 +1,38 @@
-package com.yourpackage.service;
+// ... 原有的JavaScript代码 ...
 
-import com.yourpackage.model.ExtraCrMap;
-import com.yourpackage.repository.ExtraCrMapRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+document.getElementById('save-button').addEventListener('click', function() {
+    var updatedData = [];
+    var rows = document.getElementById('data-table').rows;
+    for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        updatedData.push({
+            crNumber: row.cells[0].innerText,
+            crOwner: row.cells[1].innerText,
+            imageUrl: row.cells[2].querySelector('input').value,
+            dast: row.cells[3].querySelector('input').value,
+            sast: row.cells[4].querySelector('input').value
+        });
+    }
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+    updatedData.forEach(data => {
+        saveData(data);
+    });
+});
 
-@Service
-public class ExtraCrMapService {
-
-    @Autowired
-    private ExtraCrMapRepository extraCrMapRepository;
-
-    @Transactional
-    public ExtraCrMap upsertExtraCrMap(ExtraCrMap newExtraCrMap) {
-        Optional<ExtraCrMap> existingExtraCrMap = extraCrMapRepository.findByCrNumber(newExtraCrMap.getCrNumber());
-
-        if (existingExtraCrMap.isPresent()) {
-            ExtraCrMap updatedExtraCrMap = existingExtraCrMap.get();
-            updateNonNullFields(updatedExtraCrMap, newExtraCrMap);
-            updatedExtraCrMap.setUpdatedAt(LocalDateTime.now());
-            return extraCrMapRepository.save(updatedExtraCrMap);
+function saveData(data) {
+    fetch('http://localhost:8080/aaas', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if (response.ok) {
+            console.log('Data saved successfully.');
         } else {
-            newExtraCrMap.setCreatedAt(LocalDateTime.now());
-            newExtraCrMap.setUpdatedAt(LocalDateTime.now());
-            return extraCrMapRepository.save(newExtraCrMap);
+            console.error('Failed to save data.');
         }
-    }
-
-    private void updateNonNullFields(ExtraCrMap existing, ExtraCrMap newExtraCrMap) {
-        if (newExtraCrMap.getCyberflowScanUrl() != null) {
-            existing.setCyberflowScanUrl(newExtraCrMap.getCyberflowScanUrl());
-        }
-        // 类似地为其他字段添加检查和更新
-        // ...
-    }
+    }).catch(error => {
+        console.error('Error saving data:', error);
+    });
 }
