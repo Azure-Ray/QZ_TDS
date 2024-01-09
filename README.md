@@ -1,25 +1,41 @@
-CREATE TABLE public.extra_cr_map
-(
-    cr_number varchar(255) NOT NULL,
-    cy varchar(255),
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    full_url varchar(255),
-    tag varchar(255),
-    artifact_group varchar(255),
-    artifact_name varchar(255),
-    artifact_version varchar(255)
-);
+package com.yourpackage.service;
 
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+import com.yourpackage.model.ExtraCrMap;
+import com.yourpackage.repository.ExtraCrMapRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-CREATE TRIGGER update_extra_cr_map_updated_at
-BEFORE UPDATE ON public.extra_cr_map
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+public class ExtraCrMapService {
+
+    @Autowired
+    private ExtraCrMapRepository extraCrMapRepository;
+
+    @Transactional
+    public ExtraCrMap upsertExtraCrMap(ExtraCrMap newExtraCrMap) {
+        Optional<ExtraCrMap> existingExtraCrMap = extraCrMapRepository.findByCrNumber(newExtraCrMap.getCrNumber());
+
+        if (existingExtraCrMap.isPresent()) {
+            ExtraCrMap updatedExtraCrMap = existingExtraCrMap.get();
+            updateNonNullFields(updatedExtraCrMap, newExtraCrMap);
+            updatedExtraCrMap.setUpdatedAt(LocalDateTime.now());
+            return extraCrMapRepository.save(updatedExtraCrMap);
+        } else {
+            newExtraCrMap.setCreatedAt(LocalDateTime.now());
+            newExtraCrMap.setUpdatedAt(LocalDateTime.now());
+            return extraCrMapRepository.save(newExtraCrMap);
+        }
+    }
+
+    private void updateNonNullFields(ExtraCrMap existing, ExtraCrMap newExtraCrMap) {
+        if (newExtraCrMap.getCyberflowScanUrl() != null) {
+            existing.setCyberflowScanUrl(newExtraCrMap.getCyberflowScanUrl());
+        }
+        // 类似地为其他字段添加检查和更新
+        // ...
+    }
+}
